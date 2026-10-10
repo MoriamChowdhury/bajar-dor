@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCategories } from "@/lib/api";
 import { todayBn } from "@/lib/utils";
 import NavLinks from "./NavLinks";
@@ -11,8 +12,8 @@ export default async function Navbar() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between py-3">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-600 text-xl">
-              🛒
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-600">
+              <Image src="/logo-icon.png" alt="" width={20} height={20} />
             </span>
             <span className="leading-tight">
               <span className="block text-lg font-bold">বাজার দর</span>
@@ -20,7 +21,7 @@ export default async function Navbar() {
             </span>
           </Link>
 
-          {/* পরে এখানে AuthButtons (session অনুযায়ী) বসবে */}
+       
           <div className="flex items-center gap-2">
             <Link href="/signin" className="btn btn-sm btn-ghost sm:btn-md">
               সাইন ইন

@@ -15,3 +15,21 @@ export const todayBn = () =>
     year: "numeric",
     timeZone: "Asia/Dhaka",
   });
+
+
+  export const UNIT_FULL: Record<string, string> = {
+  kg: "প্রতি কেজি",
+  litre: "প্রতি লিটার",
+  dozen: "প্রতি ডজন",
+  piece: "প্রতি পিস",
+};
+
+export const UNIT_SHORT: Record<string, string> = {
+  kg: "কেজি",
+  litre: "লিটার",
+  dozen: "ডজন",
+  piece: "পিস",
+};
+
+// 2.1 / -2.9 / 0  ->  ২.১ / ২.৯ / ০.০
+export const fmtPct = (pct: number) => toBn(Math.abs(pct).toFixed(1));

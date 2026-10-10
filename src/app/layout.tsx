@@ -3,6 +3,7 @@ import { Noto_Sans_Bengali } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Ticker from "@/components/Ticker";
 import "./globals.css";
 
 const bn = Noto_Sans_Bengali({
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="bn" data-theme="light">
       <body className={`${bn.className} flex min-h-screen flex-col bg-gray-50`}>
         <Navbar />
+        <Ticker />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4">{children}</main>
         <Footer />
         <Toaster position="top-center" />
