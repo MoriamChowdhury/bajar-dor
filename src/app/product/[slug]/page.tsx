@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct } from "@/lib/api";
-import { UNIT_FULL, formatPrice, fmtPct } from "@/lib/utils";
+import { UNIT_FULL, UNIT_SHORT, formatPrice, toBn } from "@/lib/utils";
 import ChangeBadge from "@/components/ChangeBadge";
+
+// পূর্ণসংখ্যা হলে ৬৩, ভগ্নাংশ হলে ৬৩.৫০
+const fmtAvg = (n: number) => (Number.isInteger(n) ? formatPrice(n) : toBn(n.toFixed(2)));
 
 export default async function ProductPage({
   params,
@@ -13,139 +16,102 @@ export default async function ProductPage({
   const p = await getProduct(slug);
   if (!p) notFound();
 
-  const unit = UNIT_FULL[p.unit];
   const min = Math.min(...p.markets.map((m) => m.min));
   const max = Math.max(...p.markets.map((m) => m.max));
   const avg = Math.round(
     p.markets.reduce((sum, m) => sum + (m.min + m.max) / 2, 0) / p.markets.length
   );
-
-  const trend =
-    p.change.dir === "up"
-      ? `গতকালের তুলনায় দাম ${fmtPct(p.change.pct)}% বেড়েছে`
-      : p.change.dir === "down"
-      ? `গতকালের তুলনায় দাম ${fmtPct(p.change.pct)}% কমেছে`
-      : "গতকালের তুলনায় দাম অপরিবর্তিত";
-  const summary = `${p.nameBn}-এর আজকের দাম ${formatPrice(p.today)} টাকা (${unit}); ${trend}।`;
-
-  // বিভাগ অনুযায়ী বাজার সাজানো
-  const byDivision = p.markets.reduce<Record<string, typeof p.markets>>((acc, m) => {
-    (acc[m.division] ??= []).push(m);
-    return acc;
-  }, {});
-
-  const history = [
-    { label: "আজ", value: p.today },
-    { label: "গতকাল", value: p.yesterday },
-    { label: "গত সপ্তাহ", value: p.lastWeek },
-    { label: "গত মাস", value: p.lastMonth },
-  ];
+  const diff = Math.abs(p.today - p.yesterday);
+  const rows = [...p.markets].sort((a, b) => a.min - b.min || a.max - b.max);
 
   return (
-    <div className="space-y-8 py-8">
-      <Link href="/" className="text-sm text-green-700 hover:underline">
-        ← হোমে ফিরুন
-      </Link>
+    <div className="space-y-6 py-8">
+      {/* breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-gray-500">
+        <Link href="/" className="hover:text-brand">হোম</Link>
+        <span>›</span>
+        <Link href={`/category/${p.category}`} className="hover:text-brand">{p.categoryNameBn}</Link>
+        <span>›</span>
+        <span className="text-gray-900">{p.nameBn}</span>
+      </nav>
 
-      {/* উপরের সারসংক্ষেপ */}
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-start gap-4">
-          <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-green-50 text-5xl">
+      {/* উপরের কার্ড */}
+      <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-4xl">
             {p.image}
           </span>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold md:text-3xl">{p.nameBn}</h1>
-              <ChangeBadge change={p.change} />
-            </div>
-            <p className="mt-2 text-sm text-gray-600 md:text-base">{summary}</p>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href={`/category/${p.category}`}
-                className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 hover:bg-green-200"
-              >
-                {p.categoryIcon} {p.categoryNameBn}
-              </Link>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                {unit}
-              </span>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold">{p.nameBn}</h1>
+            <p className="text-sm text-gray-500">{UNIT_FULL[p.unit]} · {p.categoryNameBn}</p>
+            <p className="mt-1 text-sm text-gray-600">
+              গতকালের তুলনায় আজ দাম{" "}
+              <strong>
+                {p.change.dir === "up" ? "বেড়েছে" : p.change.dir === "down" ? "কমেছে" : "অপরিবর্তিত"}
+              </strong>
+              {diff > 0 && <> · {formatPrice(diff)} টাকা</>}
+            </p>
           </div>
+        </div>
+
+        <div className="rounded-xl bg-gray-50 px-6 py-3 text-center">
+          <p className="text-xs text-gray-500">আজকের দাম</p>
+          <p className="text-3xl font-bold">{formatPrice(p.today)}</p>
+          <p className="text-xs text-gray-500">টাকা / {UNIT_SHORT[p.unit]}</p>
+          <div className="mt-1"><ChangeBadge change={p.change} /></div>
         </div>
       </section>
 
       {/* দামের সারসংক্ষেপ */}
-      <section>
-        <h2 className="mb-3 text-lg font-bold">দামের সারসংক্ষেপ</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Stat label="সর্বনিম্ন দাম" value={min} unit={unit} tone="text-green-700" />
-          <Stat label="সর্বোচ্চ দাম" value={max} unit={unit} tone="text-red-600" />
-          <Stat label="গড় দাম" value={avg} unit={unit} />
-          <Stat label="আজকের দাম" value={p.today} unit={unit} />
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-lg font-bold">দামের সারসংক্ষেপ</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="সর্বনিম্ন দাম" value={min} note="সবচেয়ে কম বাজারের দাম" tone="text-green-700" />
+          <Stat label="সর্বোচ্চ দাম" value={max} note="সবচেয়ে বেশি বাজারের দাম" tone="text-red-600" />
+          <Stat label="গড় দাম" value={avg} note={`সব বাজারের গড় (${UNIT_FULL[p.unit]})`} tone="text-brand" />
         </div>
       </section>
 
-      {/* দামের তুলনা */}
-      <section>
-        <h2 className="mb-3 text-lg font-bold">দামের তুলনা</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {history.map((h) => (
-            <div key={h.label} className="rounded-2xl border border-gray-200 bg-white p-4">
-              <p className="text-xs text-gray-500">{h.label}</p>
-              <p className="mt-1 text-lg font-bold">{formatPrice(h.value)} টাকা</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* বাজারভিত্তিক আজকের দাম */}
-      <section>
-        <h2 className="mb-3 text-lg font-bold">বাজারভিত্তিক আজকের দাম</h2>
-        <div className="space-y-6">
-          {Object.entries(byDivision).map(([division, markets]) => (
-            <div key={division}>
-              <h3 className="mb-2 text-sm font-semibold text-gray-600">📍 {division} বিভাগ</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {markets.map((m) => (
-                  <div
-                    key={m.market}
-                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4"
-                  >
-                    <span className="font-medium">{m.market}</span>
-                    <span className="text-sm">
-                      <span className="text-green-700">{formatPrice(m.min)}</span>
-                      <span className="text-gray-400"> – </span>
-                      <span className="text-red-600">{formatPrice(m.max)}</span>
-                      <span className="ml-1 text-xs text-gray-500">টাকা</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+      {/* বাজারভিত্তিক টেবিল */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-lg font-bold">বাজারভিত্তিক আজকের দাম</h2>
+        <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead className="bg-gray-50 text-gray-500">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">বাজার</th>
+                <th className="px-4 py-3 text-left font-medium">বিভাগ</th>
+                <th className="px-4 py-3 text-right font-medium">সর্বনিম্ন</th>
+                <th className="px-4 py-3 text-right font-medium">সর্বোচ্চ</th>
+                <th className="px-4 py-3 text-right font-medium">গড়</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((m) => (
+                <tr key={m.market} className="border-t border-gray-200">
+                  <td className="px-4 py-3 font-medium">{m.market}</td>
+                  <td className="px-4 py-3 text-gray-600">{m.division}</td>
+                  <td className="px-4 py-3 text-right">{formatPrice(m.min)} টাকা</td>
+                  <td className="px-4 py-3 text-right">{formatPrice(m.max)} টাকা</td>
+                  <td className="px-4 py-3 text-right font-bold">{fmtAvg((m.min + m.max) / 2)} টাকা</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  unit,
-  tone = "",
-}: {
-  label: string;
-  value: number;
-  unit: string;
-  tone?: string;
-}) {
+function Stat({ label, value, note, tone }: { label: string; value: number; note: string; tone: string }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4">
+    <div className="rounded-xl border border-gray-200 p-4">
       <p className="text-xs text-gray-500">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${tone}`}>{formatPrice(value)} টাকা</p>
-      <p className="text-xs text-gray-400">{unit}</p>
+      <p className={`mt-1 text-2xl font-bold ${tone}`}>
+        {formatPrice(value)} <span className="text-sm font-medium">টাকা</span>
+      </p>
+      <p className="mt-1 text-xs text-gray-400">{note}</p>
     </div>
   );
 }

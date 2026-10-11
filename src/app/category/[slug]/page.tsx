@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getCategories, getProducts } from "@/lib/api";
+import { toBn } from "@/lib/utils";
 import SortedProducts from "@/components/SortedProducts";
 import NotFoundView from "@/components/NotFoundView";
 
@@ -18,12 +19,17 @@ export default async function CategoryPage({
 
   return (
     <div className="py-8">
-      <h1 className="mb-6 flex items-center gap-3 text-2xl font-bold">
-        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-3xl">
+      <section className="mb-6 flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-gray-100 text-3xl">
           {category.icon}
         </span>
-        {category.nameBn}
-      </h1>
+        <div>
+          <h1 className="text-2xl font-bold">{category.nameBn}</h1>
+          <p className="text-sm text-gray-500">
+            {toBn(products.length)}টি পণ্যের আজকের দাম ও পরিবর্তন
+          </p>
+        </div>
+      </section>
 
       {products.length === 0 ? (
         <NotFoundView

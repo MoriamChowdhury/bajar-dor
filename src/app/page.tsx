@@ -42,7 +42,7 @@ export default async function HomePage() {
         <p className="mb-4 text-sm text-gray-500">
           সব প্রয়োজনীয় পণ্যের আজকের দাম ও পরিবর্তন
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ">
           {products.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
       </section>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { Product } from "@/lib/api";
+import { toBn } from "@/lib/utils";
 import ProductCard from "./ProductCard";
 
 type Sort = "default" | "asc" | "desc";
@@ -8,17 +9,15 @@ type Sort = "default" | "asc" | "desc";
 export default function SortedProducts({ products }: { products: Product[] }) {
   const [sort, setSort] = useState<Sort>("default");
 
-  // দাম number হিসেবে আছে, তাই সংখ্যা ধরেই sort হয় (বাংলা অঙ্ক শুধু দেখানোর সময়)
+  // দাম number, তাই সংখ্যা ধরেই sort হয়
   const sorted = [...products].sort((a, b) =>
     sort === "asc" ? a.today - b.today : sort === "desc" ? b.today - a.today : 0
   );
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-end gap-2">
-        <label htmlFor="sort" className="text-sm text-gray-600">
-          সাজান:
-        </label>
+      <div className="mb-4 flex items-center justify-end gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <label htmlFor="sort" className="text-sm text-gray-600">সাজান</label>
         <select
           id="sort"
           value={sort}
@@ -31,7 +30,11 @@ export default function SortedProducts({ products }: { products: Product[] }) {
         </select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <p className="mb-3 text-xs text-gray-500">
+        মোট {toBn(sorted.length)}টি পণ্য দেখানো হচ্ছে
+      </p>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sorted.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}

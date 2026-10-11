@@ -7,7 +7,9 @@
   --color-success: #068a43;
   --color-success-content: #ffffff;
 }
-
+@theme {
+  --color-brand: #068a43;
+}
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 

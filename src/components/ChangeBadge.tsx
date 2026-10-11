@@ -5,9 +5,9 @@ export default function ChangeBadge({ change }: { change: Product["change"] }) {
   const { dir, pct } = change;
   const style =
     dir === "up"
-      ? "bg-green-100 text-green-700"
+      ? "bg-red-50 text-red-600"
       : dir === "down"
-      ? "bg-red-100 text-red-700"
+      ? "bg-green-50 text-green-700"
       : "bg-gray-100 text-gray-600";
   const symbol = dir === "up" ? "▲" : dir === "down" ? "▼" : "—";
 
